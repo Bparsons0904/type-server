@@ -8,7 +8,7 @@ import {
   ObjectType,
 } from "type-graphql";
 import { User } from "../entity/User";
-import { Profile } from "../entity/Profile";
+// import { Profile } from "../entity/Profile";
 import jwt from "jsonwebtoken";
 
 /**
@@ -45,14 +45,14 @@ class UserResponse {
   token: string;
 }
 // TODO: Consider moving to shared file
-@ObjectType()
-class UserProfile {
-  @Field(() => User)
-  user: User;
+// @ObjectType()
+// class UserProfile {
+//   @Field(() => User)
+//   user: User;
 
-  @Field(() => Profile, { nullable: true })
-  profile: Profile;
-}
+//   @Field(() => Profile, { nullable: true })
+//   profile: Profile;
+// }
 
 @Resolver()
 export class UserResolver {
@@ -61,15 +61,17 @@ export class UserResolver {
    * @param me User returned from the token auth
    * @returns User data plus profile
    */
-  @Query(() => UserProfile, { nullable: true })
-  async getMe(@Ctx() { me }: Context): Promise<UserProfile | undefined> {
+  @Query(() => User, { nullable: true })
+  async getMe(@Ctx() { me }: Context): Promise<User | undefined> {
     const user: User | undefined = await User.findOne(
       { id: me.id },
       { relations: ["profile"] }
     );
     if (user) {
-      const profile: Profile = user.profile;
-      return { user, profile };
+      console.log(user);
+
+      // const profile: Profile = user.profile;
+      return user;
     }
     throw new Error("Unable to retrieve user");
   }

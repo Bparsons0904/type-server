@@ -93,7 +93,7 @@ __decorate([
     __metadata("design:type", Date)
 ], User.prototype, "updatedAt", void 0);
 __decorate([
-    typeorm_1.OneToOne(() => Profile_1.Profile),
+    typeorm_1.OneToOne(() => Profile_1.Profile, (profile) => profile.user),
     typeorm_1.JoinColumn(),
     __metadata("design:type", Profile_1.Profile)
 ], User.prototype, "profile", void 0);

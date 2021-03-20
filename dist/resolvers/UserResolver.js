@@ -27,7 +27,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
 const type_graphql_1 = require("type-graphql");
 const User_1 = require("../entity/User");
-const Profile_1 = require("../entity/Profile");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const createToken = (user, secret, expiresIn) => __awaiter(void 0, void 0, void 0, function* () {
     const { id, email, username } = user;
@@ -48,26 +47,13 @@ __decorate([
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
-let UserProfile = class UserProfile {
-};
-__decorate([
-    type_graphql_1.Field(() => User_1.User),
-    __metadata("design:type", User_1.User)
-], UserProfile.prototype, "user", void 0);
-__decorate([
-    type_graphql_1.Field(() => Profile_1.Profile, { nullable: true }),
-    __metadata("design:type", Profile_1.Profile)
-], UserProfile.prototype, "profile", void 0);
-UserProfile = __decorate([
-    type_graphql_1.ObjectType()
-], UserProfile);
 let UserResolver = class UserResolver {
     getMe({ me }) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield User_1.User.findOne({ id: me.id }, { relations: ["profile"] });
             if (user) {
-                const profile = user.profile;
-                return { user, profile };
+                console.log(user);
+                return user;
             }
             throw new Error("Unable to retrieve user");
         });
@@ -108,7 +94,7 @@ let UserResolver = class UserResolver {
     }
 };
 __decorate([
-    type_graphql_1.Query(() => UserProfile, { nullable: true }),
+    type_graphql_1.Query(() => User_1.User, { nullable: true }),
     __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

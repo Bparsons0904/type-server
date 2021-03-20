@@ -7,7 +7,7 @@ import {
   Field,
   Float,
   Ctx,
-  ObjectType,
+  // ObjectType,
 } from "type-graphql";
 import { Profile } from "../entity/Profile";
 import { User } from "../entity/User";

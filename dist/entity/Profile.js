@@ -13,6 +13,7 @@ exports.Profile = void 0;
 const typeorm_1 = require("typeorm");
 const type_graphql_1 = require("type-graphql");
 const class_validator_1 = require("class-validator");
+const User_1 = require("./User");
 let Profile = class Profile extends typeorm_1.BaseEntity {
 };
 __decorate([
@@ -70,6 +71,11 @@ __decorate([
     typeorm_1.Column({ default: null }),
     __metadata("design:type", String)
 ], Profile.prototype, "role", void 0);
+__decorate([
+    type_graphql_1.Field(() => User_1.User),
+    typeorm_1.OneToOne(() => User_1.User, (user) => user.profile),
+    __metadata("design:type", User_1.User)
+], Profile.prototype, "user", void 0);
 __decorate([
     type_graphql_1.Field(() => String),
     typeorm_1.CreateDateColumn(),
