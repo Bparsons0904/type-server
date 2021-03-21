@@ -26,27 +26,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
 const type_graphql_1 = require("type-graphql");
-const User_1 = require("../entity/User");
+const User_1 = require("../entities/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const isAuth_1 = require("../middleware/isAuth");
+const isAdmin_1 = require("../middleware/isAdmin");
 const createToken = (user, secret, expiresIn) => __awaiter(void 0, void 0, void 0, function* () {
     const { id, email, username } = user;
     return yield jsonwebtoken_1.default.sign({ id, email, username }, secret, {
         expiresIn,
     });
 });
-let UserResponse = class UserResponse {
-};
-__decorate([
-    type_graphql_1.Field(() => User_1.User, { nullable: true }),
-    __metadata("design:type", User_1.User)
-], UserResponse.prototype, "user", void 0);
-__decorate([
-    type_graphql_1.Field(() => String, { nullable: true }),
-    __metadata("design:type", String)
-], UserResponse.prototype, "token", void 0);
-UserResponse = __decorate([
-    type_graphql_1.ObjectType()
-], UserResponse);
 let UserResolver = class UserResolver {
     getMe({ me }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -67,7 +56,7 @@ let UserResolver = class UserResolver {
             const user = yield User_1.User.create({ username, email, password }).save();
             const secret = (_a = process.env.SECRET) !== null && _a !== void 0 ? _a : "";
             const token = yield createToken(user, secret, "30 days");
-            return { user, token };
+            return token;
         });
     }
     loginUser(login, password) {
@@ -94,6 +83,7 @@ let UserResolver = class UserResolver {
     }
 };
 __decorate([
+    type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     type_graphql_1.Query(() => User_1.User, { nullable: true }),
     __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
@@ -107,7 +97,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "getUsers", null);
 __decorate([
-    type_graphql_1.Mutation(() => UserResponse),
+    type_graphql_1.UseMiddleware(isAdmin_1.isAdmin),
+    type_graphql_1.Mutation(() => String),
     __param(0, type_graphql_1.Arg("username")),
     __param(1, type_graphql_1.Arg("email")),
     __param(2, type_graphql_1.Arg("password")),
@@ -116,6 +107,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "createUser", null);
 __decorate([
+    type_graphql_1.UseMiddleware(isAdmin_1.isAdmin),
     type_graphql_1.Mutation(() => String),
     __param(0, type_graphql_1.Arg("login")),
     __param(1, type_graphql_1.Arg("password")),

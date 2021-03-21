@@ -19,11 +19,13 @@ const apollo_server_express_1 = require("apollo-server-express");
 const type_graphql_1 = require("type-graphql");
 const UserResolver_1 = require("./resolvers/UserResolver");
 const ProfileResolver_1 = require("./resolvers/ProfileResolver");
+const sanitize_1 = __importDefault(require("sanitize"));
 const cors_1 = __importDefault(require("cors"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv/config");
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const app = express_1.default();
+    app.use(sanitize_1.default.middleware);
     app.use(cors_1.default({
         origin: true,
         credentials: true,
@@ -34,7 +36,7 @@ require("dotenv/config");
             url: process.env.DATABASE_URL,
             synchronize: true,
             logging: false,
-            entities: ["dist/entity/**/*.js"],
+            entities: ["dist/entities/**/*.js"],
             migrations: ["dist/migration/**/*.js"],
             subscribers: ["dist/subscriber/**/*.js"],
             extra: {
@@ -57,7 +59,7 @@ require("dotenv/config");
             database: process.env.DATABASE_NAME,
             synchronize: true,
             logging: false,
-            entities: ["dist/entity/**/*.js"],
+            entities: ["dist/entities/**/*.js"],
             migrations: ["dist/migration/**/*.js"],
             subscribers: ["dist/subscriber/**/*.js"],
             extra: {

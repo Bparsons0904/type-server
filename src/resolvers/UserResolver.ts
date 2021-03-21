@@ -4,12 +4,15 @@ import {
   Arg,
   Query,
   Ctx,
-  Field,
-  ObjectType,
+  UseMiddleware,
 } from "type-graphql";
-import { User } from "../entity/User";
+import {} from "module";
+import { User } from "../entities/User";
 // import { Profile } from "../entity/Profile";
 import jwt from "jsonwebtoken";
+import { isAuth } from "../middleware/isAuth";
+import { isAdmin } from "../middleware/isAdmin";
+import { Context } from "../types";
 
 /**
  * Create jwt token for user auth
@@ -27,33 +30,6 @@ const createToken = async (user: User, secret: string, expiresIn: string) => {
   });
 };
 
-// TODO: Move to own shared file
-interface Context {
-  req: Request;
-  res: Response;
-  me: User;
-  token: string;
-}
-
-// TODO: Consider moving to shared file
-@ObjectType()
-class UserResponse {
-  @Field(() => User, { nullable: true })
-  user: User;
-
-  @Field(() => String, { nullable: true })
-  token: string;
-}
-// TODO: Consider moving to shared file
-// @ObjectType()
-// class UserProfile {
-//   @Field(() => User)
-//   user: User;
-
-//   @Field(() => Profile, { nullable: true })
-//   profile: Profile;
-// }
-
 @Resolver()
 export class UserResolver {
   /**
@@ -61,6 +37,7 @@ export class UserResolver {
    * @param me User returned from the token auth
    * @returns User data plus profile
    */
+  @UseMiddleware(isAuth)
   @Query(() => User, { nullable: true })
   async getMe(@Ctx() { me }: Context): Promise<User | undefined> {
     const user: User | undefined = await User.findOne(
@@ -82,8 +59,6 @@ export class UserResolver {
     return User.find();
   }
 
-  // TODO Return only the token
-  // TODO Require admin token to create new user
   /**
    * Create a new user
    * @param username User username
@@ -91,28 +66,29 @@ export class UserResolver {
    * @param password  User prehashed password
    * @returns User and token
    */
-  @Mutation(() => UserResponse)
+  @UseMiddleware(isAdmin)
+  @Mutation(() => String)
   async createUser(
     @Arg("username") username: string,
     @Arg("email") email: string,
     @Arg("password") password: string
-  ): Promise<UserResponse> {
+  ): Promise<string> {
     // Create new user and add to DB
     const user: User = await User.create({ username, email, password }).save();
 
     // Generate new token for the user
     const secret: string = process.env.SECRET ?? "";
     const token: string = await createToken(user, secret, "30 days");
-    return { user, token };
+    return token;
   }
 
-  // TODO Add admin token auth
   /**
    * Login user by either the username or email and validated password
    * @param login User selected username or email
    * @param password Unhashed password
    * @returns New token
    */
+  @UseMiddleware(isAdmin)
   @Mutation(() => String)
   async loginUser(
     @Arg("login") login: string,

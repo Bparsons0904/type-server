@@ -7,10 +7,12 @@ import {
   Field,
   Float,
   Ctx,
-  // ObjectType,
+  UseMiddleware,
 } from "type-graphql";
-import { Profile } from "../entity/Profile";
-import { User } from "../entity/User";
+import { Profile } from "../entities/Profile";
+import { User } from "../entities/User";
+import { isAuth } from "../middleware/isAuth";
+import { Context } from "../types";
 
 @InputType()
 class ProfileInput {
@@ -32,14 +34,6 @@ class ProfileInput {
   phone?: number;
 }
 
-// TODO Move to shared file
-interface Context {
-  req: Request;
-  res: Response;
-  me: User;
-  token: string;
-}
-
 @Resolver()
 export class ProfileResolver {
   /**
@@ -48,6 +42,7 @@ export class ProfileResolver {
    * @param me Authenticated user data
    * @returns Success or failure of profile creation
    */
+  @UseMiddleware(isAuth)
   @Mutation(() => Boolean)
   async createProfile(
     @Arg("createProfile", () => ProfileInput) createProfile: ProfileInput,
@@ -71,6 +66,7 @@ export class ProfileResolver {
    * @param updateProfile All fields related to the profile model
    * @returns Success or failure of the update
    */
+  @UseMiddleware(isAuth)
   @Mutation(() => Boolean)
   async updateProfile(
     @Arg("updateProfile", () => ProfileInput) updateProfile: ProfileInput

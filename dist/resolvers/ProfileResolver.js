@@ -23,8 +23,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileResolver = void 0;
 const type_graphql_1 = require("type-graphql");
-const Profile_1 = require("../entity/Profile");
-const User_1 = require("../entity/User");
+const Profile_1 = require("../entities/Profile");
+const User_1 = require("../entities/User");
+const isAuth_1 = require("../middleware/isAuth");
 let ProfileInput = class ProfileInput {
 };
 __decorate([
@@ -92,6 +93,7 @@ let ProfileResolver = class ProfileResolver {
     }
 };
 __decorate([
+    type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     type_graphql_1.Mutation(() => Boolean),
     __param(0, type_graphql_1.Arg("createProfile", () => ProfileInput)),
     __param(1, type_graphql_1.Ctx()),
@@ -100,6 +102,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProfileResolver.prototype, "createProfile", null);
 __decorate([
+    type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     type_graphql_1.Mutation(() => Boolean),
     __param(0, type_graphql_1.Arg("updateProfile", () => ProfileInput)),
     __metadata("design:type", Function),

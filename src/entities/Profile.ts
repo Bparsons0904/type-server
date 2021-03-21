@@ -6,11 +6,9 @@ import {
   Index,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
-import { User } from "./User";
 
 @ObjectType()
 @Entity({ name: "profiles" })
@@ -62,15 +60,9 @@ export class Profile extends BaseEntity {
   @Column({ default: null })
   role: string;
 
-  @Field(() => User)
-  @OneToOne(() => User, (user) => user.profile)
-  user: User;
-
-  @Field(() => String)
   @CreateDateColumn()
   createdAt: Date;
 
-  @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
 }

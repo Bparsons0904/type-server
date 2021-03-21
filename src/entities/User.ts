@@ -50,15 +50,14 @@ export class User extends BaseEntity {
   })
   password: string;
 
-  @Field(() => String)
   @CreateDateColumn()
   createdAt: Date;
 
-  @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => Profile, (profile) => profile.user)
+  @Field(() => Profile)
+  @OneToOne(() => Profile)
   @JoinColumn()
   profile: Profile;
 
