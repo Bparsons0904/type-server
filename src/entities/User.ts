@@ -18,12 +18,12 @@ import { Profile } from "./Profile";
 @ObjectType()
 @Entity({ name: "users" })
 export class User extends BaseEntity {
-  @Field()
+  @Field({ nullable: true })
   @PrimaryGeneratedColumn("uuid")
   @Index()
   id: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ unique: true })
   @Length(6, 30, {
     message:
@@ -33,7 +33,7 @@ export class User extends BaseEntity {
   @Index()
   username: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ unique: true })
   @IsEmail({}, { message: "Incorrect email format" })
   @IsNotEmpty({ message: "Email is required" })
@@ -56,16 +56,16 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Field(() => Profile)
+  @Field(() => Profile, { nullable: true })
   @OneToOne(() => Profile)
   @JoinColumn()
   profile: Profile;
 
-  @BeforeInsert()
   /**
    * Hash the password before storing and normalize username and email
    * by making all lowercase
    */
+  @BeforeInsert()
   async insertNewUser(): Promise<void> {
     this.password = await this.generatePasswordHash(this.password);
     this.username = this.username.toLowerCase();

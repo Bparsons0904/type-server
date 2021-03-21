@@ -26,52 +26,17 @@ const type_graphql_1 = require("type-graphql");
 const Profile_1 = require("../entities/Profile");
 const User_1 = require("../entities/User");
 const isAuth_1 = require("../middleware/isAuth");
-let ProfileInput = class ProfileInput {
-};
-__decorate([
-    type_graphql_1.Field({ nullable: true }),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "id", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "firstName", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "lastName", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "email", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "title", void 0);
-__decorate([
-    type_graphql_1.Field({ nullable: true }),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "image", void 0);
-__decorate([
-    type_graphql_1.Field({ nullable: true }),
-    __metadata("design:type", String)
-], ProfileInput.prototype, "role", void 0);
-__decorate([
-    type_graphql_1.Field(() => type_graphql_1.Float, { nullable: true }),
-    __metadata("design:type", Number)
-], ProfileInput.prototype, "phone", void 0);
-ProfileInput = __decorate([
-    type_graphql_1.InputType()
-], ProfileInput);
+const types_1 = require("../types");
 let ProfileResolver = class ProfileResolver {
     createProfile(createProfile, { me }) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log("Createing:", me.id);
             const profile = yield Profile_1.Profile.create(createProfile).save();
             const user = yield User_1.User.findOne({ id: me.id });
             if (user) {
                 user.profile = profile;
                 yield User_1.User.save(user);
-                return true;
+                return user;
             }
             throw new Error("Unable to retrieve user or create profile");
         });
@@ -82,9 +47,13 @@ let ProfileResolver = class ProfileResolver {
                 id: updateProfile.id,
             });
             if (!profile) {
-                return Error("Profile not found");
+                throw new Error("Profile not found");
             }
-            yield Profile_1.Profile.update({ id: profile.id }, updateProfile);
+            yield Profile_1.Profile.update({ id: profile.id }, updateProfile).then((res) => {
+                if (res.affected === 0) {
+                    throw new Error("Profile did not properly save");
+                }
+            });
             return true;
         });
     }
@@ -94,19 +63,19 @@ let ProfileResolver = class ProfileResolver {
 };
 __decorate([
     type_graphql_1.UseMiddleware(isAuth_1.isAuth),
-    type_graphql_1.Mutation(() => Boolean),
-    __param(0, type_graphql_1.Arg("createProfile", () => ProfileInput)),
+    type_graphql_1.Mutation(() => User_1.User),
+    __param(0, type_graphql_1.Arg("createProfile", () => types_1.ProfileInput)),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ProfileInput, Object]),
+    __metadata("design:paramtypes", [types_1.ProfileInput, Object]),
     __metadata("design:returntype", Promise)
 ], ProfileResolver.prototype, "createProfile", null);
 __decorate([
     type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     type_graphql_1.Mutation(() => Boolean),
-    __param(0, type_graphql_1.Arg("updateProfile", () => ProfileInput)),
+    __param(0, type_graphql_1.Arg("updateProfile", () => types_1.ProfileInput)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ProfileInput]),
+    __metadata("design:paramtypes", [types_1.ProfileInput]),
     __metadata("design:returntype", Promise)
 ], ProfileResolver.prototype, "updateProfile", null);
 __decorate([

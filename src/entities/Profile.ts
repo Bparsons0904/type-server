@@ -45,6 +45,7 @@ export class Profile extends BaseEntity {
 
   @Field()
   @Column({ type: "float" })
+  @IsNotEmpty({ message: "Phone is required" })
   phone: number;
 
   @Field()
@@ -52,12 +53,12 @@ export class Profile extends BaseEntity {
   @IsNotEmpty({ message: "Title is required" })
   title: string;
 
-  @Field()
-  @Column({ default: null })
+  @Field({ nullable: true })
+  @Column({ default: null, nullable: true })
   image: string;
 
-  @Field()
-  @Column({ default: null })
+  @Field({ nullable: true })
+  @Column({ default: null, nullable: true })
   role: string;
 
   @CreateDateColumn()

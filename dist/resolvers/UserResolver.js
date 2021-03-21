@@ -30,56 +30,65 @@ const User_1 = require("../entities/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const isAuth_1 = require("../middleware/isAuth");
 const isAdmin_1 = require("../middleware/isAdmin");
-const createToken = (user, secret, expiresIn) => __awaiter(void 0, void 0, void 0, function* () {
+const types_1 = require("../types");
+const createToken = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const { id, email, username } = user;
-    return yield jsonwebtoken_1.default.sign({ id, email, username }, secret, {
+    const secret = (_a = process.env.SECRET) !== null && _a !== void 0 ? _a : "";
+    const days = (_b = process.env.TOKEN_DAYS) !== null && _b !== void 0 ? _b : "90";
+    const expiresIn = `${days} days`;
+    const token = yield jsonwebtoken_1.default.sign({ id, email, username }, secret, {
         expiresIn,
     });
+    return token;
 });
 let UserResolver = class UserResolver {
     getMe({ me }) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield User_1.User.findOne({ id: me.id }, { relations: ["profile"] });
             if (user) {
-                console.log(user);
                 return user;
             }
             throw new Error("Unable to retrieve user");
         });
     }
     getUsers() {
-        return User_1.User.find();
+        return __awaiter(this, void 0, void 0, function* () {
+            const users = yield User_1.User.find({
+                select: ["username", "email"],
+            });
+            if ((users === null || users === void 0 ? void 0 : users.length) > 0) {
+                return users;
+            }
+            throw new Error("No users were found");
+        });
     }
     createUser(username, email, password) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield User_1.User.create({ username, email, password }).save();
-            const secret = (_a = process.env.SECRET) !== null && _a !== void 0 ? _a : "";
-            const token = yield createToken(user, secret, "30 days");
-            return token;
+            const token = yield createToken(user);
+            return { token, user };
         });
     }
     loginUser(login, password) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            let loginUser = yield User_1.User.findOne({ username: login });
-            if (!loginUser) {
-                loginUser = yield User_1.User.findOne({ email: login });
+            let user = yield User_1.User.findOne({ username: login }, { relations: ["profile"] });
+            if (!user) {
+                user = yield User_1.User.findOne({ email: login }, { relations: ["profile"] });
             }
-            if (!loginUser) {
+            if (!user) {
                 throw new Error("Invalid username or email");
             }
-            const isValid = yield loginUser.validatePassword(password);
+            const isValid = yield user.validatePassword(password);
             if (!isValid) {
                 throw new Error("Invalid password.");
             }
-            const secret = (_a = process.env.SECRET) !== null && _a !== void 0 ? _a : "";
-            const token = yield createToken(loginUser, secret, "30 days");
-            return token;
+            const token = yield createToken(user);
+            return { user, token };
         });
     }
     hello() {
-        return "hi!";
+        return "Hello World!";
     }
 };
 __decorate([
@@ -91,14 +100,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "getMe", null);
 __decorate([
+    type_graphql_1.UseMiddleware(isAdmin_1.isAdmin),
     type_graphql_1.Query(() => [User_1.User]),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "getUsers", null);
 __decorate([
     type_graphql_1.UseMiddleware(isAdmin_1.isAdmin),
-    type_graphql_1.Mutation(() => String),
+    type_graphql_1.Mutation(() => types_1.UserLogin),
     __param(0, type_graphql_1.Arg("username")),
     __param(1, type_graphql_1.Arg("email")),
     __param(2, type_graphql_1.Arg("password")),
@@ -108,7 +118,7 @@ __decorate([
 ], UserResolver.prototype, "createUser", null);
 __decorate([
     type_graphql_1.UseMiddleware(isAdmin_1.isAdmin),
-    type_graphql_1.Mutation(() => String),
+    type_graphql_1.Mutation(() => types_1.UserLogin),
     __param(0, type_graphql_1.Arg("login")),
     __param(1, type_graphql_1.Arg("password")),
     __metadata("design:type", Function),

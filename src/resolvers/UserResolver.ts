@@ -8,11 +8,10 @@ import {
 } from "type-graphql";
 import {} from "module";
 import { User } from "../entities/User";
-// import { Profile } from "../entity/Profile";
 import jwt from "jsonwebtoken";
 import { isAuth } from "../middleware/isAuth";
 import { isAdmin } from "../middleware/isAdmin";
-import { Context } from "../types";
+import { Context, UserLogin } from "../types";
 
 /**
  * Create jwt token for user auth
@@ -21,13 +20,17 @@ import { Context } from "../types";
  * @param expiresIn Time until token expires
  * @returns Token as a string
  */
-const createToken = async (user: User, secret: string, expiresIn: string) => {
+const createToken = async (user: User) => {
   // Get values from the user
   const { id, email, username }: User = user;
-  // Create signed token
-  return await jwt.sign({ id, email, username }, secret, {
+  const secret: string = process.env.SECRET ?? "";
+  const days: string = process.env.TOKEN_DAYS ?? "90";
+  const expiresIn: string = `${days} days`;
+  const token = await jwt.sign({ id, email, username }, secret, {
     expiresIn,
   });
+  // Create signed token
+  return token;
 };
 
 @Resolver()
@@ -45,41 +48,47 @@ export class UserResolver {
       { relations: ["profile"] }
     );
     if (user) {
-      console.log(user);
-
-      // const profile: Profile = user.profile;
       return user;
     }
     throw new Error("Unable to retrieve user");
   }
 
-  // TODO Remove
+  /**
+   * Get all users username and email
+   * @returns All users username and emails
+   */
+  @UseMiddleware(isAdmin)
   @Query(() => [User])
-  getUsers() {
-    return User.find();
+  async getUsers(): Promise<User[]> {
+    const users: User[] = await User.find({
+      select: ["username", "email"],
+    });
+    if (users?.length > 0) {
+      return users;
+    }
+    throw new Error("No users were found");
   }
 
   /**
    * Create a new user
    * @param username User username
    * @param email User email
-   * @param password  User prehashed password
+   * @param password  User pre-hashed password
    * @returns User and token
    */
   @UseMiddleware(isAdmin)
-  @Mutation(() => String)
+  @Mutation(() => UserLogin)
   async createUser(
     @Arg("username") username: string,
     @Arg("email") email: string,
     @Arg("password") password: string
-  ): Promise<string> {
+  ): Promise<UserLogin> {
     // Create new user and add to DB
     const user: User = await User.create({ username, email, password }).save();
 
     // Generate new token for the user
-    const secret: string = process.env.SECRET ?? "";
-    const token: string = await createToken(user, secret, "30 days");
-    return token;
+    const token: string = await createToken(user);
+    return { token, user };
   }
 
   /**
@@ -89,32 +98,34 @@ export class UserResolver {
    * @returns New token
    */
   @UseMiddleware(isAdmin)
-  @Mutation(() => String)
+  @Mutation(() => UserLogin)
   async loginUser(
     @Arg("login") login: string,
     @Arg("password") password: string
-  ): Promise<String> {
+  ): Promise<UserLogin> {
     // Attempt to find user by username
-    let loginUser: User | undefined = await User.findOne({ username: login });
+    let user: User | undefined = await User.findOne(
+      { username: login },
+      { relations: ["profile"] }
+    );
     // If no user found, attempt to find by email
-    if (!loginUser) {
-      loginUser = await User.findOne({ email: login });
+    if (!user) {
+      user = await User.findOne({ email: login }, { relations: ["profile"] });
     }
     // No user found for username or email
-    if (!loginUser) {
+    if (!user) {
       throw new Error("Invalid username or email");
     }
 
     // Validate password is correct
-    const isValid = await loginUser.validatePassword(password);
+    const isValid = await user.validatePassword(password);
     if (!isValid) {
       throw new Error("Invalid password.");
     }
 
     // Create a new token for the authenticated user
-    const secret: string = process.env.SECRET ?? "";
-    const token: string = await createToken(loginUser, secret, "30 days");
-    return token;
+    const token: string = await createToken(user);
+    return { user, token };
   }
 
   /**
@@ -123,6 +134,6 @@ export class UserResolver {
    */
   @Query(() => String)
   hello() {
-    return "hi!";
+    return "Hello World!";
   }
 }

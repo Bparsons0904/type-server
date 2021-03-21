@@ -5,14 +5,12 @@ import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { UserResolver } from "./resolvers/UserResolver";
 import { ProfileResolver } from "./resolvers/ProfileResolver";
-import sanitize from "sanitize";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 
 (async () => {
   const app = express();
-  app.use(sanitize.middleware);
   app.use(
     cors({
       origin: true,

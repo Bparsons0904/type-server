@@ -3,36 +3,13 @@ import {
   Mutation,
   Arg,
   Query,
-  InputType,
-  Field,
-  Float,
   Ctx,
   UseMiddleware,
 } from "type-graphql";
 import { Profile } from "../entities/Profile";
 import { User } from "../entities/User";
 import { isAuth } from "../middleware/isAuth";
-import { Context } from "../types";
-
-@InputType()
-class ProfileInput {
-  @Field({ nullable: true })
-  id?: string;
-  @Field()
-  firstName: string;
-  @Field()
-  lastName: string;
-  @Field()
-  email: string;
-  @Field()
-  title: string;
-  @Field({ nullable: true })
-  image?: string;
-  @Field({ nullable: true })
-  role?: string;
-  @Field(() => Float, { nullable: true })
-  phone?: number;
-}
+import { Context, ProfileInput } from "../types";
 
 @Resolver()
 export class ProfileResolver {
@@ -43,11 +20,12 @@ export class ProfileResolver {
    * @returns Success or failure of profile creation
    */
   @UseMiddleware(isAuth)
-  @Mutation(() => Boolean)
+  @Mutation(() => User)
   async createProfile(
     @Arg("createProfile", () => ProfileInput) createProfile: ProfileInput,
     @Ctx() { me }: Context
-  ): Promise<Boolean> {
+  ): Promise<User> {
+    console.log("Createing:", me.id);
     // Create a new profile
     const profile: Profile = await Profile.create(createProfile).save();
     // Query user based on authentication
@@ -56,7 +34,7 @@ export class ProfileResolver {
     if (user) {
       user.profile = profile;
       await User.save(user);
-      return true;
+      return user;
     }
     throw new Error("Unable to retrieve user or create profile");
   }
@@ -74,11 +52,17 @@ export class ProfileResolver {
     const profile: Profile | undefined = await Profile.findOne({
       id: updateProfile.id,
     });
+
     if (!profile) {
-      return Error("Profile not found");
+      throw new Error("Profile not found");
     }
-    // TODO Validate the update was successful
-    await Profile.update({ id: profile.id }, updateProfile);
+
+    // Update profile
+    await Profile.update({ id: profile.id }, updateProfile).then((res) => {
+      if (res.affected === 0) {
+        throw new Error("Profile did not properly save");
+      }
+    });
     return true;
   }
 
