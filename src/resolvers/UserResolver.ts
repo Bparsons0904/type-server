@@ -10,7 +10,7 @@ import {} from "module";
 import { User } from "../entities/User";
 import jwt from "jsonwebtoken";
 import { isAuth } from "../middleware/isAuth";
-import { isAdmin } from "../middleware/isAdmin";
+import { EmailService } from "../helpers/EmailService";
 import { Context, UserLogin } from "../helpers/types";
 
 /**
@@ -131,6 +131,10 @@ export class UserResolver {
    */
   @Query(() => String)
   hello() {
+    const email = "deadstylebp@gmail.com";
+    const link = "http://waugze.com/about";
+    EmailService.sendEmail(link, email);
+
     return "Hello World!";
   }
 }
