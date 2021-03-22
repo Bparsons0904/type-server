@@ -1,5 +1,5 @@
 import { MiddlewareFn } from "type-graphql";
-import { Context } from "../types";
+import { Context } from "../helpers/types";
 
 /**
  * Validate if token provided is for an user

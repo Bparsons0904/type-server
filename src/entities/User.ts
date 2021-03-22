@@ -78,7 +78,7 @@ export class User extends BaseEntity {
    * @returns Hashed password
    */
   async generatePasswordHash(password: string): Promise<string> {
-    const saltRounds: string = process.env.SALTROUNDS ?? "15";
+    const saltRounds: string = process.env.SALT_ROUNDS ?? "15";
     return await bcrypt.hash(password, parseInt(saltRounds));
   }
 

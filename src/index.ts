@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { createConnection } from "typeorm";
 import express from "express";
+import path from "path";
 import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { UserResolver } from "./resolvers/UserResolver";
@@ -18,53 +19,32 @@ import "dotenv/config";
     })
   );
 
-  if (process.env.DATABASE_URL) {
-    await createConnection({
-      type: "postgres",
-      url: process.env.DATABASE_URL,
-      synchronize: true,
-      logging: false,
-      entities: ["dist/entities/**/*.js"],
-      migrations: ["dist/migration/**/*.js"],
-      subscribers: ["dist/subscriber/**/*.js"],
-      extra: {
-        ssl: true,
-        rejectUnauthorized: false,
-      },
+  const database_sync: boolean =
+    process.env.DATABASE_SYNC == "true" ? true : false;
+  const database_ssl: boolean =
+    process.env.DATABASE_SSL == "true" ? true : false;
+  const database_unauth: boolean =
+    process.env.DATABASE_UNAUTH == "true" ? true : false;
+
+  await createConnection({
+    type: "postgres",
+    url: process.env.DATABASE_URL,
+    synchronize: database_sync,
+    logging: false,
+    entities: [path.join(__dirname, "entities", "*.js")],
+    extra: {
+      ssl: database_ssl,
+      rejectUnauthorized: database_unauth,
+    },
+  })
+    .then((connection) => {
+      console.log(
+        `${connection.options.type} database connection has been established successfully.`
+      );
     })
-      .then((connection) => {
-        console.log(
-          `${connection.options.database} database connection has been established successfully.`
-        );
-      })
-      .catch((err) => {
-        console.error(`Unable to connect to the database: ${err}`);
-      });
-  } else {
-    await createConnection({
-      type: "postgres",
-      username: process.env.DATABASE_USERNAME,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
-      synchronize: true,
-      logging: false,
-      entities: ["dist/entities/**/*.js"],
-      migrations: ["dist/migration/**/*.js"],
-      subscribers: ["dist/subscriber/**/*.js"],
-      extra: {
-        ssl: false,
-        rejectUnauthorized: true,
-      },
-    })
-      .then((connection) => {
-        console.log(
-          `${connection.options.database} database connection has been established successfully.`
-        );
-      })
-      .catch((err) => {
-        console.error(`Unable to connect to the database: ${err}`);
-      });
-  }
+    .catch((err) => {
+      console.error(`Unable to connect to the database: ${err}`);
+    });
 
   // Get active user from header token
   const getMe = async (token: string) => {
@@ -109,7 +89,7 @@ import "dotenv/config";
   server.applyMiddleware({ app, cors: false });
 
   // Set port and listen for incoming
-  const port = process.env.PORT || 8000;
+  const port = process.env.PORT ?? 8000;
   app.listen(port, () => {
     console.log(`Server active on http://localhost:${port}/graphql`);
   });

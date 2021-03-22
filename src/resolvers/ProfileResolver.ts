@@ -9,7 +9,7 @@ import {
 import { Profile } from "../entities/Profile";
 import { User } from "../entities/User";
 import { isAuth } from "../middleware/isAuth";
-import { Context, ProfileInput } from "../types";
+import { Context, ProfileInput } from "../helpers/types";
 
 @Resolver()
 export class ProfileResolver {

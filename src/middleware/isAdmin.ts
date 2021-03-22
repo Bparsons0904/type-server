@@ -1,5 +1,5 @@
 import { MiddlewareFn } from "type-graphql";
-import { Context } from "../types";
+import { Context } from "../helpers/types";
 import { User } from "./../entities/User";
 
 /**

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { User } from "./entities/User";
+import { User } from "../entities/User";
 import { Field, ObjectType, InputType, Float } from "type-graphql";
 
 // Interface for getting @ctx variables from context

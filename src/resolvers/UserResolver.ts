@@ -11,7 +11,7 @@ import { User } from "../entities/User";
 import jwt from "jsonwebtoken";
 import { isAuth } from "../middleware/isAuth";
 import { isAdmin } from "../middleware/isAdmin";
-import { Context, UserLogin } from "../types";
+import { Context, UserLogin } from "../helpers/types";
 
 /**
  * Create jwt token for user auth
@@ -57,7 +57,6 @@ export class UserResolver {
    * Get all users username and email
    * @returns All users username and emails
    */
-  @UseMiddleware(isAdmin)
   @Query(() => [User])
   async getUsers(): Promise<User[]> {
     const users: User[] = await User.find({
@@ -76,7 +75,6 @@ export class UserResolver {
    * @param password  User pre-hashed password
    * @returns User and token
    */
-  @UseMiddleware(isAdmin)
   @Mutation(() => UserLogin)
   async createUser(
     @Arg("username") username: string,
@@ -97,7 +95,6 @@ export class UserResolver {
    * @param password Unhashed password
    * @returns New token
    */
-  @UseMiddleware(isAdmin)
   @Mutation(() => UserLogin)
   async loginUser(
     @Arg("login") login: string,
