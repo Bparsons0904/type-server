@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 
 (async () => {
-  const app = express();
+  const app: express.Application = express();
   app.use(
     cors({
       origin: true,
@@ -47,12 +47,12 @@ import "dotenv/config";
     });
 
   // Get active user from header token
-  const getMe = async (token: string) => {
+  const getMe = async (token: string): Promise<string | undefined> => {
     if (token) {
       // Verify token matches secret token
-      const secret: any = process.env.SECRET;
+      const secret: string = process.env.SECRET as string;
       try {
-        return await jwt.verify(token, secret);
+        return (await jwt.verify(token, secret)) as string;
       } catch (e) {
         throw new AuthenticationError("Your session expired. Sign in again.");
       }
@@ -62,11 +62,12 @@ import "dotenv/config";
   };
 
   // Start instance of ApolloServer
-  const server = new ApolloServer({
+  const server: ApolloServer = new ApolloServer({
     introspection: true,
     playground: true,
     schema: await buildSchema({
       resolvers: [UserResolver, ProfileResolver],
+      emitSchemaFile: path.resolve(__dirname, "schema.gql"),
     }),
     context: async ({ req, res }) => {
       if (req.body.operationName === "IntrospectionQuery") {
@@ -75,7 +76,7 @@ import "dotenv/config";
 
       // Set token and get user if exist
       const token: string = req.headers["x-token"] as string;
-      const me = await getMe(token);
+      const me: string | undefined = await getMe(token);
 
       return {
         req,

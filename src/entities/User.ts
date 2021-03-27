@@ -9,6 +9,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  BeforeUpdate,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
@@ -51,10 +52,10 @@ export class User extends BaseEntity {
   password: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt: string;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt: string;
 
   @Field(() => Profile, { nullable: true })
   @OneToOne(() => Profile)
@@ -66,6 +67,7 @@ export class User extends BaseEntity {
    * by making all lowercase
    */
   @BeforeInsert()
+  @BeforeUpdate()
   async insertNewUser(): Promise<void> {
     this.password = await this.generatePasswordHash(this.password);
     this.username = this.username.toLowerCase();
