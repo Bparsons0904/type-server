@@ -49,7 +49,7 @@ export class EmailService {
           border-radius: 15px
         }
       </style>
-      <p>A request has been made to change the password for ${email}.</p><div><a href="http://localhost:4200/user/passwordreset/${link}">Reset Password</a></div>`,
+      <p>A request has been made to change the password for ${email}.</p><div><a href="http://localhost:4200/auth/passwordreset/${link}">Reset Password</a></div>`,
     };
 
     this.transporter.sendMail(mailOptions, (error: any, info: any) => {

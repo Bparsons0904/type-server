@@ -49,8 +49,6 @@ export class UserResolver {
       { relations: ["profile"] }
     )) as User;
     if (user) {
-      console.log(user);
-
       return user;
     }
     throw new Error("Unable to retrieve user");

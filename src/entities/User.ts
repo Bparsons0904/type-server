@@ -10,11 +10,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeUpdate,
+  OneToMany,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
 import bcrypt from "bcrypt";
 import { Profile } from "./Profile";
+import { Product } from "./Product";
 
 @ObjectType()
 @Entity({ name: "users" })
@@ -61,6 +63,11 @@ export class User extends BaseEntity {
   @OneToOne(() => Profile)
   @JoinColumn()
   profile: Profile;
+
+  @Field(() => Product, { nullable: true })
+  @OneToMany(() => Product, (product) => product.user)
+  @JoinColumn()
+  products: Product[];
 
   /**
    * Hash the password before storing and normalize username and email

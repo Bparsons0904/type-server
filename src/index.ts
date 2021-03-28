@@ -4,11 +4,13 @@ import express from "express";
 import path from "path";
 import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { UserResolver } from "./resolvers/UserResolver";
-import { ProfileResolver } from "./resolvers/ProfileResolver";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+
+import { UserResolver } from "./resolvers/UserResolver";
+import { ProfileResolver } from "./resolvers/ProfileResolver";
+import { ProductResolver } from "./resolvers/ProductResolver";
 
 (async () => {
   const app: express.Application = express();
@@ -66,7 +68,7 @@ import "dotenv/config";
     introspection: true,
     playground: true,
     schema: await buildSchema({
-      resolvers: [UserResolver, ProfileResolver],
+      resolvers: [UserResolver, ProfileResolver, ProductResolver],
       emitSchemaFile: path.resolve(__dirname, "schema.gql"),
     }),
     context: async ({ req, res }) => {
