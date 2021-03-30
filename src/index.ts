@@ -33,7 +33,7 @@ import { ProductResolver } from "./resolvers/ProductResolver";
     url: process.env.DATABASE_URL,
     synchronize: database_sync,
     logging: false,
-    entities: [__dirname + "/entity/*.js"],
+    entities: [__dirname + "/entities/*.js"],
     extra: {
       ssl: database_ssl,
       rejectUnauthorized: database_unauth,
