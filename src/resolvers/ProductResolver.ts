@@ -10,7 +10,6 @@ import { Product } from "../entities/Product";
 import { User } from "../entities/User";
 import { isAuth } from "../middleware/isAuth";
 import { Context, ProductInput } from "../helpers/types";
-import { relative } from "node:path";
 
 @Resolver()
 export class ProductResolver {
@@ -116,28 +115,28 @@ export class ProductResolver {
    * @param updateProfile All fields related to the profile model
    * @returns Success or failure of the update
    */
-  @UseMiddleware(isAuth)
-  @Mutation(() => Boolean)
-  async updateProfile(
-    @Arg("updateProduct", () => ProductInput) updateProduct: ProductInput
-  ): Promise<Boolean | Error> {
-    // const profile: Profile | undefined = await Profile.findOne({
-    //   id: updateProfile.id,
-    // });
+  // @UseMiddleware(isAuth)
+  // @Mutation(() => Boolean)
+  // async updateProfile(
+  //   @Arg("updateProduct", () => ProductInput) updateProduct: ProductInput
+  // ): Promise<Boolean | Error> {
+  //   const profile: Profile | undefined = await Profile.findOne({
+  //     id: updateProfile.id,
+  //   });
 
-    // if (!profile) {
-    //   throw new Error("Profile not found");
-    // }
+  //   if (!profile) {
+  //     throw new Error("Profile not found");
+  //   }
 
-    // // Update profile
-    // await Profile.update({ id: profile.id }, updateProfile).then((res) => {
-    //   if (res.affected === 0) {
-    //     throw new Error("Profile did not properly save");
-    //   }
-    // });
+  //   // Update profile
+  //   await Profile.update({ id: profile.id }, updateProfile).then((res) => {
+  //     if (res.affected === 0) {
+  //       throw new Error("Profile did not properly save");
+  //     }
+  //   });
 
-    return true;
-  }
+  //   return true;
+  // }
 
   // TODO Remove before deploy, for testing only
   @Query(() => [Product])
