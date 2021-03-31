@@ -34,9 +34,11 @@ import { ProductResolver } from "./resolvers/ProductResolver";
     synchronize: database_sync,
     logging: false,
     entities: [__dirname + "/entities/*.js"],
+    ssl: database_ssl,
     extra: {
-      ssl: database_ssl,
-      rejectUnauthorized: database_unauth,
+      ssl: {
+        rejectUnauthorized: database_unauth,
+      },
     },
   })
     .then((connection) => {
