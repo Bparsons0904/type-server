@@ -21,24 +21,22 @@ import { ProductResolver } from "./resolvers/ProductResolver";
     })
   );
 
-  // const database_sync: boolean =
-  //   process.env.DATABASE_SYNC == "true" ? true : false;
-  // const database_ssl: boolean =
-  //   process.env.DATABASE_SSL == "true" ? true : false;
-  // const database_unauth: boolean =
-  //   process.env.DATABASE_UNAUTH == "true" ? true : false;
+  const database_sync: boolean =
+    process.env.DATABASE_SYNC == "true" ? true : false;
+  const database_ssl: boolean =
+    process.env.DATABASE_SSL == "true" ? true : false;
+  const database_unauth: boolean =
+    process.env.DATABASE_UNAUTH == "true" ? true : false;
 
   await createConnection({
     type: "postgres",
     url: process.env.DATABASE_URL,
-    synchronize: true,
+    synchronize: database_sync,
     logging: false,
     entities: [__dirname + "/entities/*.js"],
-    ssl: true,
+    ssl: database_ssl,
     extra: {
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      rejectUnauthorized: database_unauth,
     },
   })
     .then((connection) => {

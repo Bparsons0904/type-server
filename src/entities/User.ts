@@ -53,6 +53,9 @@ export class User extends BaseEntity {
   })
   password: string;
 
+  @Column({ default: false })
+  verified: boolean;
+
   @CreateDateColumn()
   createdAt: string;
 

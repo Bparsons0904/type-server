@@ -74,20 +74,44 @@ export class UserResolver {
    * @param username User username
    * @param email User email
    * @param password  User pre-hashed password
-   * @returns User and token
+   * @returns True if processes completed successfully
    */
-  @Mutation(() => UserLogin)
+  @Mutation(() => Boolean)
   async createUser(
     @Arg("username") username: string,
     @Arg("email") email: string,
-    @Arg("password") password: string
-  ): Promise<UserLogin> {
+    @Arg("password") password: string,
+    @Arg("remember") remember: boolean
+  ): Promise<boolean> {
     // Create new user and add to DB
     const user: User = await User.create({ username, email, password }).save();
+    if (!user) {
+      throw new Error("Error creating a new user");
+    }
 
-    // Generate new token for the user
+    const emailService: EmailService = new EmailService();
+    const link: string = `${user.id}/${remember}`;
+    emailService.registration(user.email, link);
+    return true;
+  }
+
+  /**
+   * Get user by id and confirm user registered
+   * @param id Provided id of user
+   * @returns User and token
+   */
+  @Mutation(() => UserLogin)
+  async completeRegistration(@Arg("id") id: string): Promise<UserLogin> {
+    // Create new user and add to DB
+    const user: User = (await User.findOne({ id })) as User;
+    if (!user) {
+      throw new Error("Error finding user");
+    }
+
+    user.verified = true;
+    await user.save();
     const token: string = await createToken(user);
-    return { token, user };
+    return { user, token };
   }
 
   /**
@@ -99,7 +123,8 @@ export class UserResolver {
   @Mutation(() => UserLogin)
   async loginUser(
     @Arg("login") login: string,
-    @Arg("password") password: string
+    @Arg("password") password: string,
+    @Arg("remember") remember: boolean
   ): Promise<UserLogin> {
     // Attempt to find user by username
     let user: User = (await User.findOne(
@@ -116,6 +141,13 @@ export class UserResolver {
     // No user found for username or email
     if (!user) {
       throw new Error("Invalid username or email");
+    }
+
+    if (!user.verified) {
+      const emailService: EmailService = new EmailService();
+      const link: string = `${user.id}/${remember}`;
+      emailService.registration(user.email, link);
+      throw new Error("Email not validated.");
     }
 
     // Validate password is correct
