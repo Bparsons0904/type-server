@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
 import { MailOptions } from "nodemailer/lib/json-transport";
 import Mail from "nodemailer/lib/mailer";
-import SendmailTransport from "nodemailer/lib/sendmail-transport";
 
 /**
  * Service to handle sending emails
