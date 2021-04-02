@@ -4,11 +4,12 @@ import express from "express";
 import path from "path";
 import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { UserResolver } from "./resolvers/UserResolver";
-import { ProfileResolver } from "./resolvers/ProfileResolver";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+
+import { UserResolver } from "./resolvers/UserResolver";
+import { ProfileResolver } from "./resolvers/ProfileResolver";
 
 (async () => {
   const app: express.Application = express();
@@ -31,7 +32,7 @@ import "dotenv/config";
     url: process.env.DATABASE_URL,
     synchronize: database_sync,
     logging: false,
-    entities: [path.join(__dirname, "entities", "*.js")],
+    entities: [__dirname + "/entities/*.js"],
     extra: {
       ssl: database_ssl,
       rejectUnauthorized: database_unauth,

@@ -37,26 +37,6 @@ const createToken = async (user: User) => {
 @Resolver()
 export class UserResolver {
   /**
-   * Get current user with profile
-   * @param me User returned from the token auth
-   * @returns User data plus profile
-   */
-  @UseMiddleware(isAuth)
-  @Query(() => User, { nullable: true })
-  async getMe(@Ctx() { me }: Context): Promise<User | Error> {
-    const user: User = (await User.findOne(
-      { id: me.id },
-      { relations: ["profile"] }
-    )) as User;
-    if (user) {
-      console.log(user);
-
-      return user;
-    }
-    throw new Error("Unable to retrieve user");
-  }
-
-  /**
    * Get all users username and email
    * @returns All users username and emails
    */
@@ -71,25 +51,71 @@ export class UserResolver {
     throw new Error("No users were found");
   }
 
+  ////////////////////////////////////////////////////////
+  // User Authentication
+  ////////////////////////////////////////////////////////
+
+  /**
+   * Get current user with profile
+   * @param me User returned from the token auth
+   * @returns User data plus profile
+   */
+  @UseMiddleware(isAuth)
+  @Query(() => User, { nullable: true })
+  async getMe(@Ctx() { me }: Context): Promise<User | Error> {
+    const user: User = (await User.findOne(
+      { id: me.id },
+      { relations: ["profile"] }
+    )) as User;
+    if (user) {
+      return user;
+    }
+    throw new Error("Unable to retrieve user");
+  }
+
   /**
    * Create a new user
    * @param username User username
    * @param email User email
    * @param password  User pre-hashed password
-   * @returns User and token
+   * @returns True if processes completed successfully
    */
-  @Mutation(() => UserLogin)
+  @Mutation(() => Boolean)
   async createUser(
     @Arg("username") username: string,
     @Arg("email") email: string,
-    @Arg("password") password: string
-  ): Promise<UserLogin> {
+    @Arg("password") password: string,
+    @Arg("remember") remember: boolean
+  ): Promise<boolean> {
     // Create new user and add to DB
     const user: User = await User.create({ username, email, password }).save();
+    if (!user) {
+      throw new Error("Error creating a new user");
+    }
 
-    // Generate new token for the user
+    const emailService: EmailService = new EmailService();
+    const link: string = `${user.id}/${remember}`;
+    emailService.registration(user.email, link);
+    return true;
+  }
+
+  /**
+   * Get user by id and confirm user registered
+   * @param id Provided id of user
+   * @returns User and token
+   */
+  @Mutation(() => UserLogin)
+  async completeRegistration(@Arg("id") id: string): Promise<UserLogin> {
+    // Create new user and add to DB
+    const user: User = (await User.findOne({ id })) as User;
+    if (!user) {
+      throw new Error("Error finding user");
+    }
+
+    user.verified = true;
+    await user.save();
     const token: string = await createToken(user);
-    return { token, user };
+    return { user, token };
   }
 
   /**
@@ -101,7 +127,8 @@ export class UserResolver {
   @Mutation(() => UserLogin)
   async loginUser(
     @Arg("login") login: string,
-    @Arg("password") password: string
+    @Arg("password") password: string,
+    @Arg("remember") remember: boolean
   ): Promise<UserLogin> {
     // Attempt to find user by username
     let user: User = (await User.findOne(
@@ -120,6 +147,14 @@ export class UserResolver {
       throw new Error("Invalid username or email");
     }
 
+    // Resend the validation email to the user
+    if (!user.verified) {
+      const emailService: EmailService = new EmailService();
+      const link: string = `${user.id}/${remember}`;
+      emailService.registration(user.email, link);
+      throw new Error("Email not validated.");
+    }
+
     // Validate password is correct
     const isValid: boolean = await user.validatePassword(password);
     if (!isValid) {
@@ -131,10 +166,39 @@ export class UserResolver {
     return { user, token };
   }
 
+  ////////////////////////////////////////////////////////
+  // Password Resets and Changes
+  ////////////////////////////////////////////////////////
+
+  /**
+   *  Validate token before providing user emails
+   * @param id Password reset id sent to the user
+   * @returns Email of user to reset
+   */
+  @Query(() => String)
+  async getResetToken(@Arg("id") id: string): Promise<String> {
+    // Get and validate id is valid
+    const passwordReset: PasswordReset = (await PasswordReset.findOne(
+      id
+    )) as PasswordReset;
+    if (!passwordReset) {
+      throw new Error("Password reset not found, create a new recovery.");
+    }
+    const nowTime: number = new Date().getTime();
+    const expiredTime: number =
+      new Date(passwordReset.createdAt).getTime() + 60 * 60 * 24 * 1000;
+    // Verify request has not expired
+    if (nowTime > expiredTime) {
+      throw new Error("Reset link has expired, please submit a new one.");
+    }
+    // Valid request, return email to be used to reset
+    return passwordReset.email;
+  }
+
   /**
    * Create a link to reset users password.
    * @param email Email to send password reset link to
-   * @returns
+   * @returns success or failure of request
    */
   @Mutation(() => Boolean)
   async resetPassword(@Arg("email") email: string): Promise<Boolean | Error> {
@@ -154,9 +218,9 @@ export class UserResolver {
       return Error("Error creating password reset. Please try again.");
     }
 
+    // Validate user exist and send email
     const user: User = (await User.findOne({ email })) as User;
     if (user) {
-      // TODO: Uncomment after testing
       emailService.resetPassword(email, passwordReset.id);
     }
     return true;
@@ -172,63 +236,47 @@ export class UserResolver {
   async changePassword(
     @Arg("id") id: string,
     @Arg("password") password: string
-  ): Promise<UserLogin | Error> {
+  ): Promise<UserLogin> {
     // Check if user has a password reset active
     let passwordReset: PasswordReset = (await PasswordReset.findOne({
       id,
     })) as PasswordReset;
 
     // Check if passwordReset object is valid and update password
-    if (passwordReset) {
-      const nowTime: number = new Date().getTime();
-      const expiredTime: number =
-        new Date(passwordReset.createdAt).getTime() + 60 * 60 * 24 * 1000;
-      if (nowTime > expiredTime) {
-        // Password is expired, send the user a new token
-        const emailService: EmailService = new EmailService();
-        passwordReset.remove();
-        passwordReset = await PasswordReset.create({
-          email: passwordReset.email,
-        }).save();
-        if (!passwordReset) {
-          return Error("Error resetting password, please try again");
-        }
-        emailService.resetPassword(passwordReset.email, passwordReset.id);
-        return Error("Password Link Expired, new link sent to email.");
-      }
-
-      // Get user and update password
-      const user: User = (await User.findOne(
-        { email: passwordReset.email },
-        { relations: ["profile"] }
-      )) as User;
-      if (user) {
-        user.password = password;
-        user.save();
-        // Create new token to return
-        const token: string = await createToken(user);
-        passwordReset.remove();
-        return { user, token };
-      }
+    if (!passwordReset) {
+      throw new Error("Failed password reset");
     }
-    throw new Error("Failed password reset");
-  }
-
-  @Query(() => String)
-  async getResetToken(@Arg("id") id: string): Promise<String> {
-    const passwordReset: PasswordReset = (await PasswordReset.findOne(
-      id
-    )) as PasswordReset;
-    if (passwordReset) {
-      const nowTime: number = new Date().getTime();
-      const expiredTime: number =
-        new Date(passwordReset.createdAt).getTime() + 60 * 60 * 24 * 1000;
-      if (nowTime > expiredTime) {
-        throw new Error("Reset link has expired, please submit a new one.");
+    const nowTime: number = new Date().getTime();
+    const expiredTime: number =
+      new Date(passwordReset.createdAt).getTime() + 60 * 60 * 24 * 1000;
+    if (nowTime > expiredTime) {
+      // Password is expired, send the user a new token
+      const emailService: EmailService = new EmailService();
+      passwordReset.remove();
+      passwordReset = await PasswordReset.create({
+        email: passwordReset.email,
+      }).save();
+      if (!passwordReset) {
+        throw new Error("Error resetting password, please try again");
       }
-      return passwordReset.email;
+      emailService.resetPassword(passwordReset.email, passwordReset.id);
+      throw new Error("Password Link Expired, new link sent to email.");
     }
-    throw new Error("Password reset not found, create a new recovery.");
+
+    // Get user and update password
+    const user: User = (await User.findOne(
+      { email: passwordReset.email },
+      { relations: ["profile"] }
+    )) as User;
+    if (!user) {
+      throw new Error("Cannot find user");
+    }
+    user.password = password;
+    user.save();
+    // Create new token to return
+    const token: string = await createToken(user);
+    passwordReset.remove();
+    return { user, token };
   }
 
   /**

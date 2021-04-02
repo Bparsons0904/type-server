@@ -1,16 +1,13 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   BeforeInsert,
   Index,
   OneToOne,
   JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   BeforeUpdate,
 } from "typeorm";
+import { Base } from "../Model/Base";
 import { Field, ObjectType } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
 import bcrypt from "bcrypt";
@@ -18,12 +15,7 @@ import { Profile } from "./Profile";
 
 @ObjectType()
 @Entity({ name: "users" })
-export class User extends BaseEntity {
-  @Field({ nullable: true })
-  @PrimaryGeneratedColumn("uuid")
-  @Index()
-  id: string;
-
+export class User extends Base {
   @Field({ nullable: true })
   @Column({ unique: true })
   @Length(6, 30, {
@@ -51,11 +43,8 @@ export class User extends BaseEntity {
   })
   password: string;
 
-  @CreateDateColumn()
-  createdAt: string;
-
-  @UpdateDateColumn()
-  updatedAt: string;
+  @Column({ default: false })
+  verified: boolean;
 
   @Field(() => Profile, { nullable: true })
   @OneToOne(() => Profile)

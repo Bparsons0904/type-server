@@ -1,23 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  BaseEntity,
-  Index,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
-import { Field, ObjectType } from "type-graphql";
+import { Entity, Column } from "typeorm";
+import { Base } from "../Model/Base";
+import { Field, ObjectType, Float } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
 
 @ObjectType()
 @Entity({ name: "profiles" })
-export class Profile extends BaseEntity {
-  @Field()
-  @PrimaryGeneratedColumn("uuid")
-  @Index()
-  id: string;
-
+export class Profile extends Base {
   @Field()
   @Column()
   @Length(2, 30, {
@@ -43,7 +31,7 @@ export class Profile extends BaseEntity {
   })
   email: string;
 
-  @Field()
+  @Field(() => Float)
   @Column({ type: "float" })
   @IsNotEmpty({ message: "Phone is required" })
   phone: number;
@@ -60,10 +48,4 @@ export class Profile extends BaseEntity {
   @Field({ nullable: true })
   @Column({ default: null, nullable: true })
   role: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

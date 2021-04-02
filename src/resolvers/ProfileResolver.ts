@@ -1,11 +1,4 @@
-import {
-  Resolver,
-  Mutation,
-  Arg,
-  Query,
-  Ctx,
-  UseMiddleware,
-} from "type-graphql";
+import { Resolver, Mutation, Arg, Ctx, UseMiddleware } from "type-graphql";
 import { Profile } from "../entities/Profile";
 import { User } from "../entities/User";
 import { isAuth } from "../middleware/isAuth";
@@ -25,7 +18,6 @@ export class ProfileResolver {
     @Arg("createProfile", () => ProfileInput) createProfile: ProfileInput,
     @Ctx() { me }: Context
   ): Promise<User> {
-    console.log("Createing:", me.id);
     // Create a new profile
     const profile: Profile = await Profile.create(createProfile).save();
     // Query user based on authentication
@@ -48,7 +40,7 @@ export class ProfileResolver {
   @Mutation(() => Boolean)
   async updateProfile(
     @Arg("updateProfile", () => ProfileInput) updateProfile: ProfileInput
-  ): Promise<Boolean | Error> {
+  ): Promise<Boolean> {
     const profile: Profile | undefined = await Profile.findOne({
       id: updateProfile.id,
     });
@@ -64,11 +56,5 @@ export class ProfileResolver {
       }
     });
     return true;
-  }
-
-  // TODO Remove before deploy, for testing only
-  @Query(() => [Profile])
-  profiles() {
-    return Profile.find();
   }
 }

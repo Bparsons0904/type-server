@@ -4,7 +4,7 @@
   "description": "Typescrip GraphQL Server",
   "main": "ormconfig.js",
   "scripts": {
-    "start": "tsc && node ./dist",
+    "start": "node ./dist",
     "dev": "nodemon ./dist",
     "watch": "tsc -w",
     "build": "tsc",

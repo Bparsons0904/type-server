@@ -44,3 +44,24 @@ export class ProfileInput {
   @Field(() => Float, { nullable: true })
   phone?: number;
 }
+
+////////////////////////////////////////////////////////
+// Products Custom Types
+////////////////////////////////////////////////////////
+@InputType()
+export class ProductInput {
+  @Field({ nullable: true })
+  id?: string;
+  @Field()
+  title: string;
+  @Field()
+  description: string;
+  @Field({ nullable: true })
+  image?: string;
+  @Field({ nullable: true })
+  video?: string;
+  @Field(() => Float, { nullable: true })
+  cost: number;
+  @Field(() => Float, { nullable: true })
+  user?: User;
+}
