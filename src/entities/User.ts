@@ -1,31 +1,21 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
-  BaseEntity,
   BeforeInsert,
   Index,
   OneToOne,
   JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   BeforeUpdate,
-  OneToMany,
 } from "typeorm";
+import { Base } from "../Model/Base";
 import { Field, ObjectType } from "type-graphql";
 import { IsEmail, IsNotEmpty, Length } from "class-validator";
 import bcrypt from "bcrypt";
 import { Profile } from "./Profile";
-import { Product } from "./Product";
 
 @ObjectType()
 @Entity({ name: "users" })
-export class User extends BaseEntity {
-  @Field({ nullable: true })
-  @PrimaryGeneratedColumn("uuid")
-  @Index()
-  id: string;
-
+export class User extends Base {
   @Field({ nullable: true })
   @Column({ unique: true })
   @Length(6, 30, {
@@ -56,21 +46,10 @@ export class User extends BaseEntity {
   @Column({ default: false })
   verified: boolean;
 
-  @CreateDateColumn()
-  createdAt: string;
-
-  @UpdateDateColumn()
-  updatedAt: string;
-
   @Field(() => Profile, { nullable: true })
   @OneToOne(() => Profile)
   @JoinColumn()
   profile: Profile;
-
-  @Field(() => Product, { nullable: true })
-  @OneToMany(() => Product, (product) => product.user)
-  @JoinColumn()
-  products: Product[];
 
   /**
    * Hash the password before storing and normalize username and email

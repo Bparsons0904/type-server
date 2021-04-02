@@ -1,26 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  BaseEntity,
-  Index,
-  CreateDateColumn,
-} from "typeorm";
+import { Entity, Column } from "typeorm";
+import { Base } from "../Model/Base";
 import { Field, ObjectType } from "type-graphql";
 
 @ObjectType()
 @Entity({ name: "passwordResets" })
-export class PasswordReset extends BaseEntity {
-  @Field()
-  @PrimaryGeneratedColumn("uuid")
-  @Index()
-  id: string;
-
+export class PasswordReset extends Base {
   @Field()
   @Column()
   email: string;
-
-  @Field()
-  @CreateDateColumn()
-  createdAt: string;
 }
