@@ -10,7 +10,6 @@ import "dotenv/config";
 
 import { UserResolver } from "./resolvers/UserResolver";
 import { ProfileResolver } from "./resolvers/ProfileResolver";
-import { ProductResolver } from "./resolvers/ProductResolver";
 
 (async () => {
   const app: express.Application = express();
@@ -68,7 +67,7 @@ import { ProductResolver } from "./resolvers/ProductResolver";
     introspection: true,
     playground: true,
     schema: await buildSchema({
-      resolvers: [UserResolver, ProfileResolver, ProductResolver],
+      resolvers: [UserResolver, ProfileResolver],
       emitSchemaFile: path.resolve(__dirname, "schema.gql"),
     }),
     context: async ({ req, res }) => {
